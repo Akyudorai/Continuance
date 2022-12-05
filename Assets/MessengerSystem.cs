@@ -29,6 +29,8 @@ public class MessengerSystem : MonoBehaviour
     public GameObject messageOption1;
     public GameObject messageOption2;
 
+    public GameObject typingAnimation;
+
     public bool isFirstTimeOpening = true;    
 
     private void OnEnable() 
@@ -250,10 +252,12 @@ public class MessengerSystem : MonoBehaviour
             SendText(c, sequence.Messages[i], isPlayer);            
             GameManager.GetInstance().StartCoroutine(SetScrollbarZero());
             GameManager.GetInstance().Play(GameManager.GetInstance().TextSent);
+            typingAnimation.SetActive(false);
 
             if (i+1 < sequence.Messages.Count) { 
                 int messageLength = sequence.Messages[i+1].Length;
-                int wpm = 72;               
+                int wpm = 72;
+                typingAnimation.SetActive(true);
                 yield return new WaitForSeconds(messageLength * 6/wpm);
             } 
 
