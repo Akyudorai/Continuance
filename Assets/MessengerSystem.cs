@@ -212,6 +212,7 @@ public class MessengerSystem : MonoBehaviour
             currentConversation.optionPath = 2;
             GameManager.GetInstance().StartCoroutine(SendMessageSequence(currentConversation, currentConversation.Options[currentConversation.messageIndex].OptionTwo, true));
         }
+        GameManager.GetInstance().Play(GameManager.GetInstance().TextSent2);
 
         // Disable the player options while sequence is active.
         ToggleMessageOptions(false);
@@ -248,7 +249,8 @@ public class MessengerSystem : MonoBehaviour
         {               
             SendText(c, sequence.Messages[i], isPlayer);            
             GameManager.GetInstance().StartCoroutine(SetScrollbarZero());
-            
+            GameManager.GetInstance().Play(GameManager.GetInstance().TextSent);
+
             if (i+1 < sequence.Messages.Count) { 
                 int messageLength = sequence.Messages[i+1].Length;
                 int wpm = 72;               

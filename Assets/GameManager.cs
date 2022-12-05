@@ -16,6 +16,8 @@ public class GameManager : MonoBehaviour
     [Header("Clips")]
     public AudioSource EffectsSource;
     public AudioClip VmBeepClip;
+    public AudioClip TextSent;
+    public AudioClip TextSent2;
 
     [Header("Game State")]
     public bool IsPresent = true;

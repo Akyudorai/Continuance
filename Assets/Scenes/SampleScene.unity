@@ -737,6 +737,8 @@ MonoBehaviour:
   PresentPhone: {fileID: 630132640}
   EffectsSource: {fileID: 313406849}
   VmBeepClip: {fileID: 8300000, guid: be3aab154caa2c1458e4ffdb3b747298, type: 3}
+  TextSent: {fileID: 8300000, guid: c390ba4407b61f94ebad52d1627450cb, type: 3}
+  TextSent2: {fileID: 8300000, guid: 30c72c11d9b24d6418f63d21b5c6bfd7, type: 3}
   IsPresent: 0
   endPanel: {fileID: 260375564}
   GameOver: 0
