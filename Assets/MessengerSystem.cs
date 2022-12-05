@@ -118,6 +118,7 @@ public class MessengerSystem : MonoBehaviour
         if (c.waitingForPlayerInput) 
         {
             ToggleMessageOptions(true);
+            LoadMessageOptions(c.messageIndex);
         }
         
     }
@@ -245,12 +246,14 @@ public class MessengerSystem : MonoBehaviour
             SendText(c, sequence.Messages[i], isPlayer);            
             GameManager.GetInstance().StartCoroutine(SetScrollbarZero());
             
-            if (i < sequence.Messages.Count) {
-                yield return new WaitForSeconds(2.0f);
+            if (i+1 < sequence.Messages.Count) { 
+                int messageLength = sequence.Messages[i+1].Length;
+                int wpm = 36;               
+                yield return new WaitForSeconds(messageLength * 6/wpm);
             } 
 
             else {
-                yield return new WaitForSeconds(6.0f);
+                yield return new WaitForSeconds(2.0f);
             }
             
         }
