@@ -83,7 +83,8 @@ public class MessengerSystem : MonoBehaviour
 
         // Set the text of the message prefab. 
         TMP_Text txt = newMessage.GetComponentInChildren<TMP_Text>();
-        txt.text = message;        
+        txt.text = message;
+        
     }
 
     public void SendMessageOption(int index) 
@@ -99,6 +100,7 @@ public class MessengerSystem : MonoBehaviour
             optionPath = 2;
             GameManager.GetInstance().StartCoroutine(SendMessageSequence(Options[messageIndex].OptionTwo, true));
         }
+        GameManager.GetInstance().Play(GameManager.GetInstance().TextSent2);
 
         // Disable the player options while sequence is active.
         ToggleMessageOptions(false);
@@ -138,6 +140,7 @@ public class MessengerSystem : MonoBehaviour
         {               
             SendText(sequence.Messages[i], isPlayer);            
             GameManager.GetInstance().StartCoroutine(SetScrollbarZero());
+            GameManager.GetInstance().Play(GameManager.GetInstance().TextSent);
             
             if (i < sequence.Messages.Count) {
                 yield return new WaitForSeconds(2.0f);

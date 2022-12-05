@@ -9342,6 +9342,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EffectsSource: {fileID: 2123271908}
   VmBeepClip: {fileID: 8300000, guid: be3aab154caa2c1458e4ffdb3b747298, type: 3}
+  TextSent: {fileID: 8300000, guid: 07138aec88663a044a6157c607aa0384, type: 3}
+  TextSent2: {fileID: 8300000, guid: 0fe6948009ec72244b705c9d032fe3c4, type: 3}
   IsPresent: 1
   PastDayAppsObject: {fileID: 1268818103}
   CrackedScreenObject: {fileID: 355271496}
