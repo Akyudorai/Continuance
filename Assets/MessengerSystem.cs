@@ -5,19 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-[System.Serializable]
-public class MessageOptions
-{
-    public MessageSequence OptionOne;
-    public MessageSequence OptionTwo;
-}
-
-[System.Serializable]
-public class MessageSequence 
-{
-    public List<string> Messages = new List<string>();
-}
-
 public class MessengerSystem : MonoBehaviour
 {
     public Animator animator;
@@ -25,28 +12,33 @@ public class MessengerSystem : MonoBehaviour
     public GameObject messageBoxParent;
     public Scrollbar messageScrollbar;
 
-    [Header("Message Options")]
-    public List<MessageOptions> Options = new List<MessageOptions>();
-    public List<MessageOptions> Responses = new List<MessageOptions>();
-    public int messageIndex = 0;
-    public int optionPath = 0;
+    public GameObject contactListPanel = null;
+    public GameObject conversationPanel = null;
+    public GameObject conversationButtonPrefab = null;
+    public GameObject conversationButtonParent;
+    public Scrollbar conversationButtonScrollbar;
+
+    [Header("Conversations")]
+    public List<Conversation> conversations = new List<Conversation>();
+    public Conversation currentConversation;
+    public Dictionary<string, GameObject> conversationButtons = new Dictionary<string, GameObject>();    
 
     [Header("Messenger Options")]
     public GameObject messageOption1;
     public GameObject messageOption2;
 
-    public bool isFirstTimeOpening = true;
-    public bool waitingForPlayerInput = false;
+    public bool isFirstTimeOpening = true;    
 
     private void OnEnable() 
     {
         if (isFirstTimeOpening)
         {            
-            GameManager.GetInstance().StartCoroutine(SendMessageSequence(Responses[0].OptionOne, false));
+            //GameManager.GetInstance().StartCoroutine(SendMessageSequence(currentConversation.Responses[0].OptionOne, false));
+            InitiateConversation(conversations[0]);
             isFirstTimeOpening = false;
         }
 
-        if (waitingForPlayerInput) {
+        if (conversationPanel.activeInHierarchy && currentConversation.waitingForPlayerInput) {
             ToggleMessageOptions(true);
         }
 
@@ -55,15 +47,125 @@ public class MessengerSystem : MonoBehaviour
 
     private void OnDisable() 
     {
-        if (waitingForPlayerInput) {
+        if (currentConversation.waitingForPlayerInput) {
             ToggleMessageOptions(false);
         }
         
         MessengerBackAnimation();
     }
 
-    public void SendText(string message, bool isPlayer) 
-    {   
+    private void Update() 
+    {
+        if (Input.GetKeyDown(KeyCode.R)) 
+        {
+            InitiateConversation(conversations[1]);
+        }
+    }
+
+    public void InitiateConversation(Conversation c) 
+    {
+        currentConversation = c;
+        GameManager.GetInstance().StartCoroutine(SendMessageSequence(c, c.Responses[0].OptionOne, false));
+        
+        // If the current conversation has not been started, create a new entry in conversations list
+        if (!conversationButtons.ContainsKey(c.Name)) 
+        {
+            // Instantiate and set transform of the new button
+            GameObject b = Instantiate(conversationButtonPrefab, Vector3.zero, Quaternion.identity);
+            b.transform.SetParent(conversationButtonParent.transform);
+            b.transform.localScale = Vector3.one;
+
+            // Refresh the layout settings
+            conversationButtonParent.GetComponent<VerticalLayoutGroup>().enabled = false;
+            conversationButtonParent.GetComponent<VerticalLayoutGroup>().enabled = true;
+            
+            // Change the color to indicate a new conversation has started
+            Image img = b.GetComponent<Image>();
+            img.color = Color.yellow;
+
+            // Set the button event
+            b.GetComponent<Button>().onClick.AddListener(delegate{OpenConversation(c);}); 
+
+            // Set the text of the message prefab. 
+            TMP_Text txt = b.GetComponentInChildren<TMP_Text>();
+            txt.text = c.Name;  
+
+            // Add button to the dictionary
+            conversationButtons.Add(c.Name, b);
+        } 
+        
+        // The conversation already exists
+        else 
+        {
+            // Change the color to indicate a new message was sent in this conversation
+            Image img = conversationButtons[c.Name].GetComponent<Image>();
+            img.color = Color.yellow;
+        }
+    }
+
+    public void OpenConversation(Conversation c)
+    {
+        // Change the color to indicate the conversation has been read.
+        Image img = conversationButtons[c.Name].GetComponent<Image>();
+        img.color = Color.gray;
+
+        LoadConversation(c);
+
+        // Switch to Conversation Panel
+        conversationPanel.SetActive(true);
+        contactListPanel.SetActive(false);
+        
+        if (c.waitingForPlayerInput) 
+        {
+            ToggleMessageOptions(true);
+        }
+        
+    }
+
+    public void LoadConversation(Conversation c) 
+    {
+        currentConversation = c;
+
+        // Clear all existing conversation prefabs
+        foreach (Transform child in messageBoxParent.transform) 
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+        
+        // Load in number of prefabs based on historyBool and historyString of conversation class
+        int numHistory = c.HistoryString.Count;
+        for (int i = 0; i < numHistory; i++) 
+        {
+            SendText(c, c.HistoryString[i], c.HistoryBool[i], true);
+        }
+
+    }
+
+    public void BackButton() 
+    {
+        if (contactListPanel.activeInHierarchy) 
+        {
+            gameObject.SetActive(false);
+        } 
+        
+        else 
+        {
+            conversationPanel.SetActive(false);
+            contactListPanel.SetActive(true);
+
+            if (currentConversation.waitingForPlayerInput && contactListPanel.activeInHierarchy) 
+            {
+                ToggleMessageOptions(false);
+            }
+             
+        }
+        
+    }
+
+    public void SendText(Conversation c, string message, bool isPlayer, bool isLoaded = false) 
+    {  
+        if (currentConversation != c) return;
+
         // Generate the message prefab and set prefab to the message panel.
         GameObject newMessage = Instantiate(messagePrefab, Vector3.zero, Quaternion.identity);
         newMessage.transform.SetParent(messageBoxParent.transform);
@@ -83,21 +185,28 @@ public class MessengerSystem : MonoBehaviour
 
         // Set the text of the message prefab. 
         TMP_Text txt = newMessage.GetComponentInChildren<TMP_Text>();
-        txt.text = message;        
+        txt.text = message;   
+
+        // Update current conversation's history
+        if (!isLoaded) {
+            currentConversation.HistoryBool.Add(isPlayer);
+            currentConversation.HistoryString.Add(message);
+        }
+            
     }
 
     public void SendMessageOption(int index) 
     {           
         // Send the first option sequence.
         if (index == 1) {
-            optionPath = 1;
-            GameManager.GetInstance().StartCoroutine(SendMessageSequence(Options[messageIndex].OptionOne, true));
+            currentConversation.optionPath = 1;
+            GameManager.GetInstance().StartCoroutine(SendMessageSequence(currentConversation, currentConversation.Options[currentConversation.messageIndex].OptionOne, true));
         } 
 
         // Send the second option sequence.
         else if (index == 2) {
-            optionPath = 2;
-            GameManager.GetInstance().StartCoroutine(SendMessageSequence(Options[messageIndex].OptionTwo, true));
+            currentConversation.optionPath = 2;
+            GameManager.GetInstance().StartCoroutine(SendMessageSequence(currentConversation, currentConversation.Options[currentConversation.messageIndex].OptionTwo, true));
         }
 
         // Disable the player options while sequence is active.
@@ -108,19 +217,16 @@ public class MessengerSystem : MonoBehaviour
     {
         // Set the text for both options available to the player to the first option in each sequence.
         TMP_Text displayOne = messageOption1.GetComponentInChildren<TMP_Text>();
-        displayOne.text = Options[index].OptionOne.Messages[0];        
+        displayOne.text = currentConversation.Options[index].OptionOne.Messages[0];        
         TMP_Text displayTwo = messageOption2.GetComponentInChildren<TMP_Text>();
-        displayTwo.text = Options[index].OptionTwo.Messages[0];
+        displayTwo.text = currentConversation.Options[index].OptionTwo.Messages[0];
 
         // Turn on the message options for the player to use.
-        waitingForPlayerInput = true;
+        currentConversation.waitingForPlayerInput = true;
         
-        if (gameObject.activeInHierarchy) {
+        if (conversationPanel.activeInHierarchy) {
             ToggleMessageOptions(true);
         }
-        
-        
-
     }
 
     private IEnumerator SetScrollbarZero() 
@@ -131,12 +237,12 @@ public class MessengerSystem : MonoBehaviour
         messageScrollbar.value = 0;
     }
 
-    public IEnumerator SendMessageSequence(MessageSequence sequence, bool isPlayer) 
+    public IEnumerator SendMessageSequence(Conversation c, MessageSequence sequence, bool isPlayer) 
     {   
         // Send each message in the sequence, one by one with a 2 second delay after each message.  (can randomize this later).
         for (int i = 0; i < sequence.Messages.Count; i++) 
         {               
-            SendText(sequence.Messages[i], isPlayer);            
+            SendText(c, sequence.Messages[i], isPlayer);            
             GameManager.GetInstance().StartCoroutine(SetScrollbarZero());
             
             if (i < sequence.Messages.Count) {
@@ -152,9 +258,13 @@ public class MessengerSystem : MonoBehaviour
         // If the the current sequence is the NPCs
         if (!isPlayer) 
         {   
+            // Change the color to indicate a new message was sent in this conversation
+            Image img = conversationButtons[c.Name].GetComponent<Image>();
+            img.color = Color.yellow;
+
             // Load the player response options   
-            if (messageIndex < Options.Count) {
-                LoadMessageOptions(messageIndex);
+            if (c.messageIndex < c.Options.Count) {
+                LoadMessageOptions(c.messageIndex);
             }
             
             else {
@@ -166,9 +276,9 @@ public class MessengerSystem : MonoBehaviour
         else 
         {
             // Begin a response sequence by the NPC
-            messageIndex++;
-            MessageSequence resultSequence = (optionPath == 1) ? Responses[messageIndex].OptionOne : Responses[messageIndex].OptionTwo;
-            GameManager.GetInstance().StartCoroutine(SendMessageSequence(resultSequence, false));
+            c.messageIndex++;
+            MessageSequence resultSequence = (c.optionPath == 1) ? c.Responses[c.messageIndex].OptionOne : c.Responses[c.messageIndex].OptionTwo;
+            GameManager.GetInstance().StartCoroutine(SendMessageSequence(c, resultSequence, false));
         }
     }
 
