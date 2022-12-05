@@ -10,20 +10,19 @@ public class GameManager : MonoBehaviour
         return instance;
     }
     
-    public AudioSource EffectsSource;
+    public GameObject PastPhone;
+    public GameObject PresentPhone;    
 
     [Header("Clips")]
+    public AudioSource EffectsSource;
     public AudioClip VmBeepClip;
 
     [Header("Game State")]
     public bool IsPresent = true;
 
-    [Header("Past-Day Elements")]
-    public GameObject PastDayAppsObject;
-
-    [Header("Present-Day Elements")]
-    public GameObject CrackedScreenObject;
-    public GameObject PresentDayAppsObject;
+    [Header("End")]
+    public GameObject endPanel;
+    public bool GameOver = false;
 
     private void Awake() 
     {
@@ -38,18 +37,22 @@ public class GameManager : MonoBehaviour
     private void Start() 
     {
         TogglePresentDay(true);
+    }    
+
+    private void Update() 
+    {
+        if (GameOver && Input.GetKeyDown(KeyCode.Q)) 
+        {
+            Quit();
+        }
     }
 
     public void TogglePresentDay(bool state) 
     {
         IsPresent = state; 
 
-        // Present Elements
-        CrackedScreenObject.SetActive(IsPresent);
-        PresentDayAppsObject.SetActive(IsPresent);
-        
-        // Past Elements
-        PastDayAppsObject.SetActive(!IsPresent);  
+        PastPhone.SetActive(!IsPresent);
+        PresentPhone.SetActive(IsPresent);
     }
 
     public void Play(AudioClip clip) 
@@ -70,6 +73,12 @@ public class GameManager : MonoBehaviour
         float lengthOfDelay = VmBeepClip.length;
         StartCoroutine(VoiceMailBeepDelay(clip, lengthOfDelay));
               
+    }
+
+    public void EndGame() 
+    {
+        endPanel.SetActive(true);
+        GameOver = true;
     }
 
     public void Quit() 

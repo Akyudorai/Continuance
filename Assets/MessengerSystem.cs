@@ -7,6 +7,8 @@ using TMPro;
 
 public class MessengerSystem : MonoBehaviour
 {
+    public PhoneManager phone;
+
     public Animator animator;
     public GameObject messagePrefab;
     public GameObject messageBoxParent;
@@ -147,6 +149,7 @@ public class MessengerSystem : MonoBehaviour
         if (contactListPanel.activeInHierarchy) 
         {
             gameObject.SetActive(false);
+            phone.ReturnToHome();
         } 
         
         else 
@@ -248,7 +251,7 @@ public class MessengerSystem : MonoBehaviour
             
             if (i+1 < sequence.Messages.Count) { 
                 int messageLength = sequence.Messages[i+1].Length;
-                int wpm = 36;               
+                int wpm = 72;               
                 yield return new WaitForSeconds(messageLength * 6/wpm);
             } 
 
@@ -272,6 +275,7 @@ public class MessengerSystem : MonoBehaviour
             
             else {
                 Debug.Log("End of Conversation");
+                phone.readyToSwitchPhone = true;
             }
         } 
         
